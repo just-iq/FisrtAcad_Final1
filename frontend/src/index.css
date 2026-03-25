@@ -1,0 +1,192 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* everything else stays EXACTLY the same */
+
+@layer base {
+  :root {
+    /* Academic Brown & Cream Palette */
+    --background: 40 30% 96%;
+    --foreground: 25 35% 18%;
+
+    --card: 40 25% 98%;
+    --card-foreground: 25 35% 18%;
+
+    --popover: 40 25% 98%;
+    --popover-foreground: 25 35% 18%;
+
+    /* Primary: Warm Light Brown */
+    --primary: 28 45% 42%;
+    --primary-foreground: 40 30% 98%;
+
+    /* Secondary: Creamy Brown */
+    --secondary: 35 30% 85%;
+    --secondary-foreground: 25 35% 22%;
+
+    /* Muted: Soft Cream */
+    --muted: 38 25% 90%;
+    --muted-foreground: 25 20% 45%;
+
+    /* Accent: Warm Beige */
+    --accent: 32 35% 88%;
+    --accent-foreground: 25 35% 22%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 25% 85%;
+    --input: 35 25% 88%;
+    --ring: 28 45% 42%;
+
+    --radius: 0.75rem;
+
+    /* Priority Colors */
+    --priority-high: 20 50% 35%;
+    --priority-medium: 30 35% 50%;
+    --priority-low: 38 25% 75%;
+
+    /* Status Colors */
+    --status-success: 140 40% 40%;
+    --status-warning: 35 80% 50%;
+    --status-pending: 28 30% 55%;
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(25 35% 18% / 0.08);
+    --shadow-card: 0 4px 12px -4px hsl(25 35% 18% / 0.1);
+    --shadow-elevated: 0 8px 24px -8px hsl(25 35% 18% / 0.12);
+
+    /* Sidebar */
+    --sidebar-background: 38 28% 94%;
+    --sidebar-foreground: 25 35% 22%;
+    --sidebar-primary: 28 45% 42%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 35 30% 88%;
+    --sidebar-accent-foreground: 25 35% 22%;
+    --sidebar-border: 35 25% 85%;
+    --sidebar-ring: 28 45% 42%;
+  }
+
+  .dark {
+    --background: 25 25% 10%;
+    --foreground: 38 25% 92%;
+
+    --card: 25 22% 14%;
+    --card-foreground: 38 25% 92%;
+
+    --popover: 25 22% 14%;
+    --popover-foreground: 38 25% 92%;
+
+    --primary: 32 50% 55%;
+    --primary-foreground: 25 25% 10%;
+
+    --secondary: 28 20% 22%;
+    --secondary-foreground: 38 25% 88%;
+
+    --muted: 25 18% 20%;
+    --muted-foreground: 35 20% 60%;
+
+    --accent: 30 25% 25%;
+    --accent-foreground: 38 25% 90%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 28 18% 22%;
+    --input: 28 18% 25%;
+    --ring: 32 50% 55%;
+
+    --priority-high: 20 55% 45%;
+    --priority-medium: 30 40% 55%;
+    --priority-low: 35 25% 40%;
+
+    --sidebar-background: 25 22% 12%;
+    --sidebar-foreground: 38 25% 90%;
+    --sidebar-primary: 32 50% 55%;
+    --sidebar-primary-foreground: 25 25% 10%;
+    --sidebar-accent: 28 20% 20%;
+    --sidebar-accent-foreground: 38 25% 88%;
+    --sidebar-border: 28 18% 22%;
+    --sidebar-ring: 32 50% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Satoshi', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Satoshi', sans-serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: 'Satoshi', sans-serif;
+  }
+
+  .font-sans {
+    font-family: 'Satoshi', sans-serif;
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Priority badge utilities */
+  .priority-high {
+    @apply bg-priority-high text-primary-foreground;
+  }
+
+  .priority-medium {
+    @apply bg-priority-medium text-primary-foreground;
+  }
+
+  .priority-low {
+    @apply bg-priority-low text-secondary-foreground;
+  }
+
+  /* Safe area for mobile */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/30;
+}
