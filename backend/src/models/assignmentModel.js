@@ -43,9 +43,12 @@ async function listAssignmentsForUser(user, { limit = 50 } = {}) {
     FROM assignments a
     LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = $5 AND s.is_latest = TRUE
     WHERE
-      (a.department_id IS NULL OR a.department_id = $1)
-      AND (a.level_id IS NULL OR a.level_id = $2)
-      AND (a.group_id IS NULL OR a.group_id = $3)
+      a.lecturer_id = $5
+      OR (
+        (a.department_id IS NULL OR a.department_id = $1)
+        AND (a.level_id IS NULL OR a.level_id = $2)
+        AND (a.group_id IS NULL OR a.group_id = $3)
+      )
     ORDER BY a.created_at DESC
     LIMIT $4;
   `,
