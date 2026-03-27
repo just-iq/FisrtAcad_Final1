@@ -83,12 +83,14 @@ _encoder = None
 
 _encoder = None
 
+_encoder = None
+
 def get_encoder():
-    """Lazy load the SentenceTransformer model with memory optimization"""
+    """Lazy load a lightweight SentenceTransformer model"""
     global _encoder
     if _encoder is None:
         try:
-            logger.info("=== LOADING SENTENCE TRANSFORMER MODEL ===")
+            logger.info("=== LOADING LIGHTWEIGHT SENTENCE TRANSFORMER MODEL ===")
             logger.info(f"HF_HOME = {os.getenv('HF_HOME')}")
 
             start = time.time()
@@ -98,29 +100,21 @@ def get_encoder():
             import gc
             
             _encoder = SentenceTransformer(
-                'all-MiniLM-L6-v2',      # Change only if you're using a different model
+                'paraphrase-MiniLM-L3-v2',   # Much lighter than all-MiniLM-L6-v2
                 device='cpu',
                 trust_remote_code=True
             )
             
-            # === Memory optimization starts here ===
+            # Memory optimization
             logger.info("Applying memory optimization...")
-            
-            # Move to CPU explicitly and clear any unnecessary caches
             _encoder = _encoder.cpu()
-            
-            # Force garbage collection
             gc.collect()
             
-            # If using PyTorch (which you are), clear cache
-            if torch.cuda.is_available():
+            if hasattr(torch, 'cuda'):
                 torch.cuda.empty_cache()
-            else:
-                # For CPU, try to release unused memory
-                torch.cuda.empty_cache() if hasattr(torch, 'cuda') else None
             
             load_time = time.time() - start
-            logger.info(f"=== MODEL LOADED SUCCESSFULLY in {load_time:.1f} seconds ===")
+            logger.info(f"=== LIGHT MODEL LOADED SUCCESSFULLY in {load_time:.1f} seconds ===")
             
         except Exception as e:
             logger.error("=== FAILED TO LOAD MODEL ===", exc_info=True)
