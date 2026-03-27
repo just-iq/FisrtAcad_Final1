@@ -35,10 +35,12 @@ scipy==1.11.4
 scikit-learn==1.4.2
 networkx==3.2.1
 
-# Sychronized AI Versions to fix AttributeError
-transformers==4.36.0
-sentence-transformers==2.2.2
+# More compatible versions for CPU deployment
+transformers==4.40.2
+sentence-transformers==2.7.0
 
-# PyTorch (CPU Only)
+# PyTorch CPU-only (2.1.0 is old and problematic)
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.1.0+cpu
+torch==2.3.0+cpu
+torchvision==0.18.0+cpu
+torchaudio==2.3.0+cpu
