@@ -35,12 +35,10 @@ scipy==1.11.4
 scikit-learn==1.4.2
 networkx==3.2.1
 
-# More compatible versions for CPU deployment
+# Transformers — kept lean
 transformers==4.40.2
 sentence-transformers==2.7.0
 
-# PyTorch CPU-only (2.1.0 is old and problematic)
+# PyTorch CPU-only — smallest viable build
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.3.0+cpu
-torchvision==0.18.0+cpu
-torchaudio==2.3.0+cpu
+torch==2.1.2+cpu
