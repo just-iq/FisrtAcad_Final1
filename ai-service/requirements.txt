@@ -16,3 +16,6 @@ python-dotenv>=1.0.0
 psycopg[binary]>=3.1.18
 numpy>=1.26.0
 scikit-learn>=1.4.0
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.0.0+cpu
