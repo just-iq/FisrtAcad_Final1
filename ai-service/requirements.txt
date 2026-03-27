@@ -29,13 +29,16 @@ python-dotenv==1.0.1
 # Database
 psycopg2-binary==2.9.9
 
-# AI & Data Science (Versions pinned for stability)
+# AI & Data Science
 numpy==1.26.4
 scipy==1.11.4
 scikit-learn==1.4.2
 networkx==3.2.1
-sentence-transformers==2.7.0
 
-# PyTorch (Updated to 2.1.0 to satisfy transformer requirements)
+# Sychronized AI Versions to fix AttributeError
+transformers==4.36.0
+sentence-transformers==2.2.2
+
+# PyTorch (CPU Only)
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.1.0+cpu
