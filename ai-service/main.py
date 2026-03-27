@@ -53,3 +53,8 @@ def recommend_resources(student_id: str):
     recs = recommend_resources_for_student(student_id)
     return RecommendResourcesResponse(recommended_resource_ids=recs["resource_ids"], scores=recs["scores"])
 
+@app.get("/health/ai")
+def ai_health():
+    if model is None:
+        return {"status": "failed", "reason": "Model failed to load at startup"}
+    return {"status": "ok", "model_loaded": True}
