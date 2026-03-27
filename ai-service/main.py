@@ -85,42 +85,40 @@ _encoder = None
 
 _encoder = None
 
+_encoder = None
+
+_encoder = None
+
 def get_encoder():
-    """Lazy load a lightweight SentenceTransformer model"""
+    """Lazy load lightweight SentenceTransformer model"""
     global _encoder
     if _encoder is None:
         try:
-            logger.info("=== LOADING LIGHTWEIGHT SENTENCE TRANSFORMER MODEL ===")
-            logger.info(f"HF_HOME = {os.getenv('HF_HOME')}")
-
+            logger.info("=== LOADING LIGHT SENTENCE TRANSFORMER MODEL ===")
             start = time.time()
-            
+
             from sentence_transformers import SentenceTransformer
             import torch
             import gc
-            
+
             _encoder = SentenceTransformer(
-                'paraphrase-MiniLM-L3-v2',   # Much lighter than all-MiniLM-L6-v2
+                'paraphrase-MiniLM-L3-v2',   # ← This is the lighter model
                 device='cpu',
                 trust_remote_code=True
             )
-            
+
             # Memory optimization
-            logger.info("Applying memory optimization...")
             _encoder = _encoder.cpu()
             gc.collect()
-            
-            if hasattr(torch, 'cuda'):
-                torch.cuda.empty_cache()
-            
+
             load_time = time.time() - start
             logger.info(f"=== LIGHT MODEL LOADED SUCCESSFULLY in {load_time:.1f} seconds ===")
-            
+
         except Exception as e:
             logger.error("=== FAILED TO LOAD MODEL ===", exc_info=True)
             _encoder = None
             raise HTTPException(status_code=503, detail="AI model failed to load")
-    
+
     return _encoder
 
 
@@ -132,13 +130,39 @@ def health():
     return {"ok": True, "service": "firstacad-ai", "env": settings.env}
 
 
+# @app.post("/analyze/announcement", response_model=AnalyzeAnnouncementResponse)
+# def analyze_announcement(req: AnalyzeAnnouncementRequest):
+#     encoder = get_encoder()           # ← This will load the model on first call
+#     text = (req.title.strip() + "\n\n" + req.body.strip()).strip()
+#     vec = encoder.embed(text)
+
+#     # ... rest of your code remains the same
+#     lowered = text.lower()
+#     keywords_high = ["exam", "test", "deadline", "due", "cancel", "postpon", "urgent", "immediately"]
+#     kw_hits = sum(1 for k in keywords_high if k in lowered)
+#     length_bonus = min(len(text) / 2000.0, 1.0)
+#     score = float(0.55 * kw_hits + 0.35 * length_bonus + 0.10 * float(abs(vec).mean()))
+
+#     if score >= 1.2:
+#         priority = "HIGH"
+#     elif score >= 0.6:
+#         priority = "MEDIUM"
+#     else:
+#         priority = "LOW"
+
+#     summary = summarize_if_needed(req.body)
+#     return AnalyzeAnnouncementResponse(priority=priority, summary=summary, score=score)
+
 @app.post("/analyze/announcement", response_model=AnalyzeAnnouncementResponse)
 def analyze_announcement(req: AnalyzeAnnouncementRequest):
-    encoder = get_encoder()           # ← This will load the model on first call
+    encoder = get_encoder()
+    
     text = (req.title.strip() + "\n\n" + req.body.strip()).strip()
-    vec = encoder.embed(text)
+    
+    # Correct way to get embedding
+    vec = encoder.encode(text, convert_to_tensor=False)   # numpy array
 
-    # ... rest of your code remains the same
+    # Heuristic scoring
     lowered = text.lower()
     keywords_high = ["exam", "test", "deadline", "due", "cancel", "postpon", "urgent", "immediately"]
     kw_hits = sum(1 for k in keywords_high if k in lowered)
@@ -153,6 +177,7 @@ def analyze_announcement(req: AnalyzeAnnouncementRequest):
         priority = "LOW"
 
     summary = summarize_if_needed(req.body)
+    
     return AnalyzeAnnouncementResponse(priority=priority, summary=summary, score=score)
 
 
