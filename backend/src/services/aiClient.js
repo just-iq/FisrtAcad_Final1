@@ -7,7 +7,7 @@ function withTimeout(ms) {
 }
 
 async function analyzeAnnouncement({ id, title, body }) {
-  const { signal, cancel } = withTimeout(10000);
+  const { signal, cancel } = withTimeout(30000);
   try {
     const res = await fetch(`${config.aiService.baseUrl}/analyze/announcement`, {
       method: "POST",
