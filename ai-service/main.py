@@ -1,3 +1,12 @@
+import os
+os.environ["HF_HOME"] = "/tmp/hf_cache"
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/hf_cache"
+os.environ["SENTENCE_TRANSFORMERS_HOME"] = "/tmp/hf_cache"
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 from fastapi import FastAPI
 
 from app.config import settings
