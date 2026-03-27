@@ -35,8 +35,9 @@ const server = http.createServer(app);
 createSocketServer(server);
 initScheduler();
 
-server.listen(config.port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`FirstAcad backend listening on :${config.port}`);
+const PORT = process.env.PORT || 8081;
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`FirstAcad backend listening on port ${PORT}`);
 });
 
