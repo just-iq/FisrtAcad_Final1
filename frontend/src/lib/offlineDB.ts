@@ -63,8 +63,8 @@ export async function initDB(): Promise<IDBPDatabase<OfflineData>> {
         const announcementsStore = db.createObjectStore('announcements', {
           keyPath: 'id'
         });
-        announcementsStore.createIndex('channel_type', 'channel_type');
-        announcementsStore.createIndex('synced', 'synced');
+        (announcementsStore as any).createIndex('channel_type', 'channel_type');
+        (announcementsStore as any).createIndex('synced', 'synced');
       }
 
       // Assignments store
@@ -72,7 +72,7 @@ export async function initDB(): Promise<IDBPDatabase<OfflineData>> {
         const assignmentsStore = db.createObjectStore('assignments', {
           keyPath: 'id'
         });
-        assignmentsStore.createIndex('synced', 'synced');
+        (assignmentsStore as any).createIndex('synced', 'synced');
       }
 
       // Timetable store
@@ -80,8 +80,8 @@ export async function initDB(): Promise<IDBPDatabase<OfflineData>> {
         const timetableStore = db.createObjectStore('timetable', {
           keyPath: 'id'
         });
-        timetableStore.createIndex('day', 'day');
-        timetableStore.createIndex('synced', 'synced');
+        (timetableStore as any).createIndex('day', 'day');
+        (timetableStore as any).createIndex('synced', 'synced');
       }
 
       // Pending actions store
@@ -102,7 +102,7 @@ export async function saveToDB<T extends keyof OfflineData>(
   data: OfflineData[T]['value']
 ): Promise<void> {
   const database = await initDB();
-  await database.put(storeName, data);
+  await database.put(storeName as any, data as any);
 }
 
 export async function getFromDB<T extends keyof OfflineData>(
@@ -110,14 +110,14 @@ export async function getFromDB<T extends keyof OfflineData>(
   key: string
 ): Promise<OfflineData[T]['value'] | undefined> {
   const database = await initDB();
-  return database.get(storeName, key);
+  return database.get(storeName as any, key as any) as any;
 }
 
 export async function getAllFromDB<T extends keyof OfflineData>(
   storeName: T
 ): Promise<OfflineData[T]['value'][]> {
   const database = await initDB();
-  return database.getAll(storeName);
+  return database.getAll(storeName as any) as any;
 }
 
 export async function deleteFromDB<T extends keyof OfflineData>(
@@ -125,7 +125,7 @@ export async function deleteFromDB<T extends keyof OfflineData>(
   key: string
 ): Promise<void> {
   const database = await initDB();
-  await database.delete(storeName, key);
+  await database.delete(storeName as any, key as any);
 }
 
 // Specific operations for announcements
@@ -159,16 +159,42 @@ export async function markAnnouncementReadOffline(id: string): Promise<void> {
       is_read: true,
       synced: false
     });
+
+    // Add to pending actions
+    await addPendingAction({
+      id: `mark_read_${id}_${Date.now()}`,
+      type: 'mark_read',
+      data: { announcement_id: id },
+      timestamp: Date.now(),
+      retries: 0
+    });
+  }
+}
+
+export async function markChannelReadOffline(channelType: string): Promise<void> {
+  const database = await initDB();
+  const allAnnouncements = await getAllFromDB('announcements');
+
+  const tx = database.transaction('announcements', 'readwrite');
+  for (const announcement of allAnnouncements) {
+    if (announcement.channel_type === channelType && !announcement.is_read) {
+      await tx.store.put({
+        ...announcement,
+        is_read: true,
+        synced: false
+      });
+
+      await addPendingAction({
+        id: `mark_read_${announcement.id}_${Date.now()}`,
+        type: 'mark_read',
+        data: { announcement_id: announcement.id },
+        timestamp: Date.now(),
+        retries: 0
+      });
+    }
   }
 
-  // Add to pending actions
-  await addPendingAction({
-    id: `mark_read_${id}_${Date.now()}`,
-    type: 'mark_read',
-    data: { announcement_id: id },
-    timestamp: Date.now(),
-    retries: 0
-  });
+  await tx.done;
 }
 
 // Specific operations for assignments
@@ -248,9 +274,9 @@ export async function getUnsyncedData(): Promise<{
   const database = await initDB();
 
   const [announcements, assignments, timetable] = await Promise.all([
-    database.getAllFromIndex('announcements', 'synced', false),
-    database.getAllFromIndex('assignments', 'synced', false),
-    database.getAllFromIndex('timetable', 'synced', false)
+    (database.getAllFromIndex as any)('announcements', 'synced', false),
+    (database.getAllFromIndex as any)('assignments', 'synced', false),
+    (database.getAllFromIndex as any)('timetable', 'synced', false)
   ]);
 
   return { announcements, assignments, timetable };
@@ -258,7 +284,7 @@ export async function getUnsyncedData(): Promise<{
 
 export async function markAsSynced(storeName: keyof OfflineData, ids: string[]): Promise<void> {
   const database = await initDB();
-  const tx = database.transaction(storeName, 'readwrite');
+  const tx = (database.transaction as any)(storeName, 'readwrite');
 
   for (const id of ids) {
     const item = await tx.store.get(id);

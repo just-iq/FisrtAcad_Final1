@@ -51,7 +51,7 @@ export default function Announcements() {
   const location = useLocation();
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
-  const { data, error, isLoading } = useQuery({
+  const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["announcements", "feed"],
     queryFn: async () => {
       const result = (await offlineApi.announcementsFeed()).announcements;
@@ -70,16 +70,16 @@ export default function Announcements() {
     initialData: []
   });
 
-  // Fetch unread counts
+  // Fetch unread counts (offline-aware)
   const { data: unreadData, refetch: refetchUnread } = useQuery({
     queryKey: ["announcements", "unread-counts"],
-    queryFn: async () => (await api.announcementUnreadCounts()).counts,
+    queryFn: async () => (await offlineApi.announcementUnreadCounts()).counts,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: (failureCount, error) => {
-      // Don't retry if offline
       if (!navigator.onLine) return false;
       return failureCount < 1;
-    }
+    },
+    initialData: []
   });
 
   // Mark channel as read when entering
@@ -150,6 +150,27 @@ export default function Announcements() {
     }
   }, [location.state, channels.length]);
 
+  const parseDate = (value: unknown): Date => {
+    const date = value ? new Date(String(value)) : new Date();
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+  };
+
+  const safeFormat = (date: Date, formatStr: string) => {
+    try {
+      return format(date, formatStr);
+    } catch {
+      return "";
+    }
+  };
+
+  const safeFormatDistanceToNow = (date: Date) => {
+    try {
+      return formatDistanceToNow(date, { addSuffix: false });
+    } catch {
+      return "";
+    }
+  };
+
   // Map announcements to messages
   const allMessages: Message[] = (data || []).map((a: any) => ({
     id: a.id,
@@ -158,7 +179,7 @@ export default function Announcements() {
     summary: a.summary || undefined,
     sender: a.role_context || "Unknown",
     senderRole: (a.role_context || "student").toLowerCase(),
-    timestamp: new Date(a.created_at),
+    timestamp: parseDate(a.created_at),
     priority: (a.priority || "low").toLowerCase() as "high" | "medium" | "low",
     channelType: a.channel_type
   }));
@@ -284,7 +305,7 @@ export default function Announcements() {
                         )}>{channel.name}</h3>
                         {latest && (
                           <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                            {formatDistanceToNow(latest.timestamp, { addSuffix: false })}
+                            {safeFormatDistanceToNow(latest.timestamp)}
                           </span>
                         )}
                       </div>
@@ -391,21 +412,21 @@ export default function Announcements() {
             {channelMessages.length > 0 ? (
               channelMessages.slice().reverse().map((message, index, arr) => {
                 const showDateSeparator = index === 0 ||
-                  format(message.timestamp, "yyyy-MM-dd") !==
-                  format(arr[index - 1].timestamp, "yyyy-MM-dd");
+                safeFormat(message.timestamp, "yyyy-MM-dd") !==
+                safeFormat(arr[index - 1].timestamp, "yyyy-MM-dd");
 
-                return (
-                  <div key={message.id}>
-                    {/* Date Separator */}
-                    {showDateSeparator && (
-                      <div className="flex justify-center mb-4">
-                        <span className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
-                          {format(message.timestamp, "MMMM d, yyyy")}
-                        </span>
-                      </div>
-                    )}
+              return (
+                <div key={message.id}>
+                  {/* Date Separator */}
+                  {showDateSeparator && (
+                    <div className="flex justify-center mb-4">
+                      <span className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
+                        {safeFormat(message.timestamp, "MMMM d, yyyy")}
+                      </span>
+                    </div>
+                  )}
 
-                    {/* Message Bubble */}
+                  {/* Message Bubble */}
                     <div className={cn(
                       "bg-card rounded-2xl rounded-tl-sm border border-border p-4 shadow-sm max-w-[90%]",
                       message.priority === "high" && "border-l-4 border-l-red-500"
@@ -416,7 +437,7 @@ export default function Announcements() {
                           {roleLabels[message.senderRole] || message.sender}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {format(message.timestamp, "h:mm a")}
+                          {safeFormat(message.timestamp, "h:mm a")}
                         </span>
                         {message.priority === "high" && (
                           <span className="bg-red-500/10 text-red-500 text-[10px] font-medium px-1.5 py-0.5 rounded">

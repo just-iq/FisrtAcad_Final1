@@ -8,6 +8,7 @@ import {
   getCachedTimetable,
   addPendingAction,
   markAnnouncementReadOffline,
+  markChannelReadOffline,
   initDB
 } from './offlineDB';
 import { syncService } from './sync';
@@ -21,19 +22,40 @@ export const offlineApi = {
       await saveAnnouncements(response.announcements);
       return response;
     } catch (error) {
-      // Always try to return cached data, regardless of error type
       const cached = await getCachedAnnouncements();
       return { announcements: cached || [] };
     }
   },
 
+  async announcementUnreadCounts() {
+    try {
+      return await api.announcementUnreadCounts();
+    } catch (error) {
+      const cached = await getCachedAnnouncements();
+      const counts = (cached || []).reduce((acc: Record<string, number>, item: any) => {
+        if (!item.is_read) {
+          acc[item.channel_type] = (acc[item.channel_type] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      return {
+        counts: Object.entries(counts).map(([channel_type, count]) => ({ channel_type, count }))
+      };
+    }
+  },
+
   async markChannelRead(channelType: string) {
     if (!navigator.onLine) {
-      // For channel read, we'll just return success since it's not critical
+      await markChannelReadOffline(channelType);
       return { marked: 0 };
     }
 
-    return await api.markChannelRead(channelType);
+    const response = await api.markChannelRead(channelType);
+
+    // mirror to offline cache for better consistency
+    await markChannelReadOffline(channelType);
+
+    return response;
   },
 
   // Assignments
