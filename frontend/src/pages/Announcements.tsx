@@ -103,22 +103,18 @@ export default function Announcements() {
       );
 
       // Optimistically update unread counts
+      const newUnreadData = (unreadData || []).map(c => 
+        c.channel_type === selectedChannel.type 
+          ? { ...c, count: 0 }
+          : c
+      );
       queryClient.setQueryData(
         ["announcements", "unread-counts"],
-        (old: any[]) => {
-          if (!Array.isArray(old)) return old;
-          return old.map(c => 
-            c.channel_type === selectedChannel.type 
-              ? { ...c, count: 0 }
-              : c
-          );
-        }
+        newUnreadData
       );
 
       // Update the total badge count
-      const currentUnreadForChannel = (unreadData || []).find(c => c.channel_type === selectedChannel.type)?.count || 0;
-      const currentTotal = queryClient.getQueryData(["badge", "announcements"]) as number || 0;
-      const newTotal = Math.max(0, currentTotal - currentUnreadForChannel);
+      const newTotal = newUnreadData.reduce((sum, c) => sum + c.count, 0);
       queryClient.setQueryData(["badge", "announcements"], newTotal);
 
       // Then sync to backend and DB (don't refetch, keep optimistic update)
