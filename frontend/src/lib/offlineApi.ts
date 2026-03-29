@@ -130,16 +130,32 @@ export const offlineApi = {
 
   // Initialize offline functionality
   async init() {
-    // Register service worker manually for development
-    if ('serviceWorker' in navigator && import.meta.env.DEV) {
+    console.log('Initializing offline functionality...');
+    console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
+    console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
+    console.log('Online status:', navigator.onLine);
+
+    // Register service worker for both development and production
+    if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/'
-        });
-        console.log('Service Worker registered in development:', registration);
+        // Check if already controlled by a service worker
+        const existingRegistration = await navigator.serviceWorker.getRegistration();
+        console.log('Existing SW registration:', existingRegistration);
+
+        // Only register manually if not already handled by Vite PWA
+        if (import.meta.env.DEV || !existingRegistration) {
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/'
+          });
+          console.log('Service Worker registered:', registration, 'Mode:', import.meta.env.DEV ? 'development' : 'production');
+        } else {
+          console.log('Service Worker already exists from Vite PWA');
+        }
       } catch (error) {
         console.log('Service Worker registration failed:', error);
       }
+    } else {
+      console.log('Service Worker not supported');
     }
 
     syncService.setupServiceWorkerListener();

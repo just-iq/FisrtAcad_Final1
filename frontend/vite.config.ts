@@ -15,10 +15,15 @@ export default defineConfig({
       srcDir: 'public',
       filename: 'sw.js',
       injectRegister: 'inline',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: []
+      },
       manifest: {
         name: 'FirstAcad Final',
         short_name: 'FirstAcad',
         start_url: '/',
+        scope: '/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#2563eb',

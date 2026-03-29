@@ -43,8 +43,11 @@ registerRoute(
   ({ url }) => {
     // Cache requests to your backend API (hosted on Render)
     const apiUrl = new URL(import.meta.env?.VITE_API_URL || 'https://firstacad-final1.onrender.com');
-    return url.origin === apiUrl.origin ||
-           url.origin.includes('https://firstacad-final1.onrender.com'); // Your Render backend domain
+    console.log('SW: Checking URL for caching:', url.href, 'API URL:', apiUrl.href);
+    const shouldCache = url.origin === apiUrl.origin ||
+           url.origin.includes('firstacad-final1.onrender.com');
+    console.log('SW: Should cache?', shouldCache);
+    return shouldCache;
   },
   new NetworkFirst({
     cacheName: 'api-cache',
