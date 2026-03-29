@@ -100,17 +100,15 @@ export default function Announcements() {
         }
       );
 
-      // Then sync to backend and DB
+      // Then sync to backend and DB (don't refetch, keep optimistic update)
       offlineApi.markChannelRead(selectedChannel.type)
         .then(() => {
-          // Refresh unread counts from API
+          // Only refresh unread counts, don't refetch full announcements
           refetchUnread();
-          // Re-fetch to ensure sync with backend
-          refetch();
         })
         .catch(console.error);
     }
-  }, [selectedChannel, refetchUnread, refetch, queryClient]);
+  }, [selectedChannel, refetchUnread, queryClient]);
 
   // Live updates — new announcements and AI-enriched updates (summary/priority patch)
   useEffect(() => {
