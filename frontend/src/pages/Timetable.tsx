@@ -24,9 +24,18 @@ export default function Timetable() {
 
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["timetable"],
-    queryFn: async () => (await offlineApi.timetable()).timetable
+    queryFn: async () => (await offlineApi.timetable()).timetable,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    networkMode: 'offlineFirst', // Use cache first, even if stale
+    retry: (failureCount, error) => {
+      // Don't retry if offline
+      if (!navigator.onLine) return false;
+      // Retry up to 2 times for network errors
+      return failureCount < 2;
+    }
   });
 
   // Mark page as visited so nav badge clears

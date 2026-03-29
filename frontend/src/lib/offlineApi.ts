@@ -16,14 +16,17 @@ export const offlineApi = {
   // Announcements
   async announcementsFeed() {
     try {
+      console.log('Fetching announcements online...');
       const response = await api.announcementsFeed();
-      // Cache the data for offline use
+      console.log('Caching announcements data:', response.announcements?.length, 'entries');
       await saveAnnouncements(response.announcements);
       return response;
     } catch (error) {
-      // If offline, return cached data
+      console.log('Announcements fetch failed:', error.message);
       if (!navigator.onLine) {
+        console.log('Offline - returning cached announcements');
         const cached = await getCachedAnnouncements();
+        console.log('Cached announcements:', cached?.length || 0);
         return { announcements: cached };
       }
       throw error;
@@ -42,12 +45,17 @@ export const offlineApi = {
   // Assignments
   async assignmentsList() {
     try {
+      console.log('Fetching assignments online...');
       const response = await api.assignmentsList();
+      console.log('Caching assignments data:', response.assignments?.length, 'entries');
       await saveAssignments(response.assignments);
       return response;
     } catch (error) {
+      console.log('Assignments fetch failed:', error.message);
       if (!navigator.onLine) {
+        console.log('Offline - returning cached assignments');
         const cached = await getCachedAssignments();
+        console.log('Cached assignments:', cached?.length || 0);
         return { assignments: cached };
       }
       throw error;
@@ -73,12 +81,17 @@ export const offlineApi = {
   // Timetable
   async timetable() {
     try {
+      console.log('Fetching timetable online...');
       const response = await api.timetable();
+      console.log('Caching timetable data:', response.timetable?.length, 'entries');
       await saveTimetable(response.timetable);
       return response;
     } catch (error) {
+      console.log('Timetable fetch failed:', error.message);
       if (!navigator.onLine) {
+        console.log('Offline - returning cached timetable');
         const cached = await getCachedTimetable();
+        console.log('Cached timetable entries:', cached?.length || 0);
         return { timetable: cached };
       }
       throw error;
@@ -107,12 +120,25 @@ export const offlineApi = {
   },
 
   // Initialize offline functionality
-  init() {
+  async init() {
+    // Register service worker manually for development
+    if ('serviceWorker' in navigator && import.meta.env.DEV) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
+        });
+        console.log('Service Worker registered in development:', registration);
+      } catch (error) {
+        console.log('Service Worker registration failed:', error);
+      }
+    }
+
     syncService.setupServiceWorkerListener();
     syncService.registerBackgroundSync();
 
     // Sync on app start if online
     if (navigator.onLine) {
+      console.log('Online - syncing pending actions...');
       syncService.syncPendingActions();
     }
   }

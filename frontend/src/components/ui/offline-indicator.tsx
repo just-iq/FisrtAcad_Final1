@@ -1,7 +1,9 @@
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Wifi, WifiOff } from 'lucide-react';
+import { Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { syncService } from '@/lib/sync';
 
 interface OfflineIndicatorProps {
   className?: string;
@@ -24,13 +26,21 @@ export function OfflineIndicator({ className }: OfflineIndicatorProps) {
 
 export function OnlineIndicator({ className }: OfflineIndicatorProps) {
   const isOnline = useOnlineStatus();
+  const [syncInProgress, setSyncInProgress] = useState(false);
 
-  if (!isOnline) return null;
+  useEffect(() => {
+    // Subscribe to sync status changes
+    const unsubscribe = syncService.onSyncStatusChange(setSyncInProgress);
+    return unsubscribe;
+  }, []);
+
+  // Show indicator when online AND syncing is in progress
+  if (!isOnline || !syncInProgress) return null;
 
   return (
-    <Alert className={cn("border-green-200 bg-green-50", className)}>
-      <Wifi className="h-4 w-4 text-green-600" />
-      <AlertDescription className="text-green-800">
+    <Alert className={cn("border-blue-200 bg-blue-50", className)}>
+      <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+      <AlertDescription className="text-blue-800">
         Back online! Syncing your changes...
       </AlertDescription>
     </Alert>

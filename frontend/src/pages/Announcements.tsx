@@ -51,15 +51,30 @@ export default function Announcements() {
   const location = useLocation();
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
-  const { data, refetch } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["announcements", "feed"],
-    queryFn: async () => (await offlineApi.announcementsFeed()).announcements
+    queryFn: async () => (await offlineApi.announcementsFeed()).announcements,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    networkMode: 'offlineFirst', // Use cache first, even if stale
+    retry: (failureCount, error) => {
+      // Don't retry if offline
+      if (!navigator.onLine) return false;
+      // Retry up to 2 times for network errors
+      return failureCount < 2;
+    }
   });
 
   // Fetch unread counts
   const { data: unreadData, refetch: refetchUnread } = useQuery({
     queryKey: ["announcements", "unread-counts"],
-    queryFn: async () => (await api.announcementUnreadCounts()).counts
+    queryFn: async () => (await api.announcementUnreadCounts()).counts,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: (failureCount, error) => {
+      // Don't retry if offline
+      if (!navigator.onLine) return false;
+      return failureCount < 1;
+    }
   });
 
   // Mark channel as read when entering

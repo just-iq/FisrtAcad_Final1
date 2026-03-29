@@ -26,7 +26,7 @@ import DirectMessages from "./pages/DirectMessages";
 import Profile from "./pages/Profile";
 
 // Initialize offline functionality
-offlineApi.init();
+offlineApi.init().catch(console.error);
 
 const queryClient = new QueryClient();
 

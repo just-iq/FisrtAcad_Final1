@@ -5,6 +5,7 @@ export class SyncService {
   private static instance: SyncService;
   private isOnline: boolean = navigator.onLine;
   private syncInProgress: boolean = false;
+  private syncListeners: ((inProgress: boolean) => void)[] = [];
 
   private constructor() {
     this.setupOnlineListener();
@@ -15,6 +16,18 @@ export class SyncService {
       SyncService.instance = new SyncService();
     }
     return SyncService.instance;
+  }
+
+  // Subscribe to sync status changes
+  onSyncStatusChange(callback: (inProgress: boolean) => void) {
+    this.syncListeners.push(callback);
+    return () => {
+      this.syncListeners = this.syncListeners.filter(listener => listener !== callback);
+    };
+  }
+
+  private notifySyncStatus() {
+    this.syncListeners.forEach(callback => callback(this.syncInProgress));
   }
 
   private setupOnlineListener() {
@@ -32,6 +45,7 @@ export class SyncService {
     if (this.syncInProgress || !this.isOnline) return;
 
     this.syncInProgress = true;
+    this.notifySyncStatus();
 
     try {
       const pendingActions = await getPendingActions();
@@ -56,6 +70,7 @@ export class SyncService {
       console.error('Sync process failed:', error);
     } finally {
       this.syncInProgress = false;
+      this.notifySyncStatus();
     }
   }
 

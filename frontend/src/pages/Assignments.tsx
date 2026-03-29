@@ -48,7 +48,16 @@ export default function Assignments() {
 
   const { data: assignmentsData } = useQuery({
     queryKey: ["assignments"],
-    queryFn: async () => (await offlineApi.assignmentsList()).assignments
+    queryFn: async () => (await offlineApi.assignmentsList()).assignments,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    networkMode: 'offlineFirst', // Use cache first, even if stale
+    retry: (failureCount, error) => {
+      // Don't retry if offline
+      if (!navigator.onLine) return false;
+      // Retry up to 2 times for network errors
+      return failureCount < 2;
+    }
   });
 
   const { data: resourcesData } = useQuery({
