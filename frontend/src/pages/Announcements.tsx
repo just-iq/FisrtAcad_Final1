@@ -115,11 +115,17 @@ export default function Announcements() {
         }
       );
 
+      // Update the total badge count
+      const currentUnreadForChannel = (unreadData || []).find(c => c.channel_type === selectedChannel.type)?.count || 0;
+      const currentTotal = queryClient.getQueryData(["badge", "announcements"]) as number || 0;
+      const newTotal = Math.max(0, currentTotal - currentUnreadForChannel);
+      queryClient.setQueryData(["badge", "announcements"], newTotal);
+
       // Then sync to backend and DB (don't refetch, keep optimistic update)
       offlineApi.markChannelRead(selectedChannel.type)
         .catch(console.error);
     }
-  }, [selectedChannel, queryClient]);
+  }, [selectedChannel, queryClient, unreadData]);
 
   // Live updates — new announcements and AI-enriched updates (summary/priority patch)
   useEffect(() => {
