@@ -23,13 +23,11 @@ export const offlineApi = {
       return response;
     } catch (error) {
       console.log('Announcements fetch failed:', error.message);
-      if (!navigator.onLine) {
-        console.log('Offline - returning cached announcements');
-        const cached = await getCachedAnnouncements();
-        console.log('Cached announcements:', cached?.length || 0);
-        return { announcements: cached };
-      }
-      throw error;
+      // Always try to return cached data, regardless of error type
+      console.log('Returning cached announcements');
+      const cached = await getCachedAnnouncements();
+      console.log('Cached announcements:', cached?.length || 0);
+      return { announcements: cached || [] };
     }
   },
 
@@ -52,13 +50,11 @@ export const offlineApi = {
       return response;
     } catch (error) {
       console.log('Assignments fetch failed:', error.message);
-      if (!navigator.onLine) {
-        console.log('Offline - returning cached assignments');
-        const cached = await getCachedAssignments();
-        console.log('Cached assignments:', cached?.length || 0);
-        return { assignments: cached };
-      }
-      throw error;
+      // Always try to return cached data
+      console.log('Returning cached assignments');
+      const cached = await getCachedAssignments();
+      console.log('Cached assignments:', cached?.length || 0);
+      return { assignments: cached || [] };
     }
   },
 
@@ -88,12 +84,25 @@ export const offlineApi = {
       return response;
     } catch (error) {
       console.log('Timetable fetch failed:', error.message);
-      if (!navigator.onLine) {
-        console.log('Offline - returning cached timetable');
-        const cached = await getCachedTimetable();
-        console.log('Cached timetable entries:', cached?.length || 0);
-        return { timetable: cached };
-      }
+      // Always try to return cached data
+      console.log('Returning cached timetable');
+      const cached = await getCachedTimetable();
+      console.log('Cached timetable entries:', cached?.length || 0);
+      return { timetable: cached || [] };
+    }
+  },
+
+  // Resources
+  async resourcesList() {
+    try {
+      console.log('Fetching resources online...');
+      const response = await api.resourcesList();
+      console.log('Resources data:', response.resources?.length, 'entries');
+      // For now, resources don't need local caching as they're read-only
+      return response;
+    } catch (error) {
+      console.log('Resources fetch failed:', error.message);
+      // Resources are read-only, so we don't have offline fallback
       throw error;
     }
   },
