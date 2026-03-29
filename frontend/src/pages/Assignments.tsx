@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { FileText, Presentation, File, Video, Upload, Calendar, RefreshCw, Check, X, Sparkles } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { offlineApi } from "@/lib/offlineApi";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -48,7 +48,7 @@ export default function Assignments() {
 
   const { data: assignmentsData } = useQuery({
     queryKey: ["assignments"],
-    queryFn: async () => (await api.assignmentsList()).assignments
+    queryFn: async () => (await offlineApi.assignmentsList()).assignments
   });
 
   const { data: resourcesData } = useQuery({

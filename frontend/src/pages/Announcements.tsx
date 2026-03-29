@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { MobileLayout } from "@/components/layout/MobileLayout";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { offlineApi } from "@/lib/offlineApi";
 import { getSocket } from "@/lib/socket";
 import { getAuthUser } from "@/lib/auth";
 import { useLocation } from "react-router-dom";
@@ -53,7 +53,7 @@ export default function Announcements() {
 
   const { data, refetch } = useQuery({
     queryKey: ["announcements", "feed"],
-    queryFn: async () => (await api.announcementsFeed()).announcements
+    queryFn: async () => (await offlineApi.announcementsFeed()).announcements
   });
 
   // Fetch unread counts
@@ -65,7 +65,7 @@ export default function Announcements() {
   // Mark channel as read when entering
   useEffect(() => {
     if (selectedChannel) {
-      api.markChannelRead(selectedChannel.type)
+      offlineApi.markChannelRead(selectedChannel.type)
         .then(() => {
           refetchUnread();
           queryClient.invalidateQueries({ queryKey: ["badge", "announcements"] });

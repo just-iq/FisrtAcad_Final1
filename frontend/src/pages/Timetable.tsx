@@ -3,7 +3,7 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import { TimetableCard } from "@/components/cards/TimetableCard";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { offlineApi } from "@/lib/offlineApi";
 import { getSocket } from "@/lib/socket";
 
 const days = [
@@ -26,7 +26,7 @@ export default function Timetable() {
 
   const { data } = useQuery({
     queryKey: ["timetable"],
-    queryFn: async () => (await api.timetable()).timetable
+    queryFn: async () => (await offlineApi.timetable()).timetable
   });
 
   // Mark page as visited so nav badge clears
