@@ -7,7 +7,8 @@ import {
   saveTimetable,
   getCachedTimetable,
   addPendingAction,
-  markAnnouncementReadOffline
+  markAnnouncementReadOffline,
+  initDB
 } from './offlineDB';
 import { syncService } from './sync';
 
@@ -16,17 +17,12 @@ export const offlineApi = {
   // Announcements
   async announcementsFeed() {
     try {
-      console.log('Fetching announcements online...');
       const response = await api.announcementsFeed();
-      console.log('Caching announcements data:', response.announcements?.length, 'entries');
       await saveAnnouncements(response.announcements);
       return response;
     } catch (error) {
-      console.log('Announcements fetch failed:', error.message);
       // Always try to return cached data, regardless of error type
-      console.log('Returning cached announcements');
       const cached = await getCachedAnnouncements();
-      console.log('Cached announcements:', cached?.length || 0);
       return { announcements: cached || [] };
     }
   },
@@ -43,17 +39,11 @@ export const offlineApi = {
   // Assignments
   async assignmentsList() {
     try {
-      console.log('Fetching assignments online...');
       const response = await api.assignmentsList();
-      console.log('Caching assignments data:', response.assignments?.length, 'entries');
       await saveAssignments(response.assignments);
       return response;
     } catch (error) {
-      console.log('Assignments fetch failed:', error.message);
-      // Always try to return cached data
-      console.log('Returning cached assignments');
       const cached = await getCachedAssignments();
-      console.log('Cached assignments:', cached?.length || 0);
       return { assignments: cached || [] };
     }
   },
@@ -77,17 +67,11 @@ export const offlineApi = {
   // Timetable
   async timetable() {
     try {
-      console.log('Fetching timetable online...');
       const response = await api.timetable();
-      console.log('Caching timetable data:', response.timetable?.length, 'entries');
       await saveTimetable(response.timetable);
       return response;
     } catch (error) {
-      console.log('Timetable fetch failed:', error.message);
-      // Always try to return cached data
-      console.log('Returning cached timetable');
       const cached = await getCachedTimetable();
-      console.log('Cached timetable entries:', cached?.length || 0);
       return { timetable: cached || [] };
     }
   },
@@ -95,15 +79,10 @@ export const offlineApi = {
   // Resources
   async resourcesList() {
     try {
-      console.log('Fetching resources online...');
       const response = await api.resourcesList();
-      console.log('Resources data:', response.resources?.length, 'entries');
-      // For now, resources don't need local caching as they're read-only
       return response;
     } catch (error) {
-      console.log('Resources fetch failed:', error.message);
-      // Resources are read-only, so we don't have offline fallback
-      throw error;
+      return { resources: [] };
     }
   },
 
@@ -130,32 +109,42 @@ export const offlineApi = {
 
   // Initialize offline functionality
   async init() {
-    console.log('Initializing offline functionality...');
-    console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
-    console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
-    console.log('Online status:', navigator.onLine);
+    // Initialize IndexedDB first
+    try {
+      await initDB();
+    } catch (error) {
+      console.error('Failed to initialize IndexedDB:', error);
+      // Continue anyway - some functionality might still work
+    }
 
     // Register service worker for both development and production
     if ('serviceWorker' in navigator) {
       try {
         // Check if already controlled by a service worker
         const existingRegistration = await navigator.serviceWorker.getRegistration();
-        console.log('Existing SW registration:', existingRegistration);
 
         // Only register manually if not already handled by Vite PWA
         if (import.meta.env.DEV || !existingRegistration) {
           const registration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/'
           });
-          console.log('Service Worker registered:', registration, 'Mode:', import.meta.env.DEV ? 'development' : 'production');
+
+          // Listen for SW state changes
+          registration.addEventListener('updatefound', () => {
+            console.log('Service Worker update found');
+          });
+
+          if (registration.active) {
+            console.log('Service Worker is active');
+          }
         } else {
           console.log('Service Worker already exists from Vite PWA');
         }
       } catch (error) {
-        console.log('Service Worker registration failed:', error);
+        console.error('Service Worker registration failed:', error);
       }
     } else {
-      console.log('Service Worker not supported');
+      console.warn('Service Worker not supported in this browser');
     }
 
     syncService.setupServiceWorkerListener();
@@ -163,7 +152,6 @@ export const offlineApi = {
 
     // Sync on app start if online
     if (navigator.onLine) {
-      console.log('Online - syncing pending actions...');
       syncService.syncPendingActions();
     }
   }

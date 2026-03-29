@@ -53,7 +53,10 @@ export default function Announcements() {
 
   const { data, error, isLoading } = useQuery({
     queryKey: ["announcements", "feed"],
-    queryFn: async () => (await offlineApi.announcementsFeed()).announcements,
+    queryFn: async () => {
+      const result = (await offlineApi.announcementsFeed()).announcements;
+      return result;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     networkMode: 'offlineFirst', // Use cache first, even if stale
@@ -62,7 +65,9 @@ export default function Announcements() {
       if (!navigator.onLine) return false;
       // Retry up to 2 times for network errors
       return failureCount < 2;
-    }
+    },
+    // Add initial data to prevent blank screen
+    initialData: []
   });
 
   // Fetch unread counts
@@ -199,74 +204,114 @@ export default function Announcements() {
             </div>
             <div>
               <h2 className="font-serif font-semibold text-lg text-foreground">Your Channels</h2>
-              <p className="text-sm text-muted-foreground">Tap to view announcements</p>
+              <p className="text-sm text-muted-foreground">
+                {isLoading ? "Loading announcements..." : "Tap to view announcements"}
+              </p>
             </div>
           </div>
 
-          {/* Channel List */}
-          <div className="space-y-2">
-            {channels.map((channel) => {
-              const Icon = channel.icon;
-              const latest = getLatestMessage(channel.type);
-              const unreadCount = getUnreadCount(channel.type);
-
-              return (
-                <button
-                  key={channel.id}
-                  onClick={() => setSelectedChannel(channel)}
-                  className="w-full bg-card rounded-xl border border-border p-4 flex items-center gap-4 hover:bg-accent/50 transition-colors text-left"
-                >
-                  {/* Channel Icon */}
-                  <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0",
-                    channel.type === "SCHOOL" && "bg-blue-500/10",
-                    channel.type === "DEPARTMENT_LEVEL" && "bg-purple-500/10",
-                    channel.type === "GROUP" && "bg-green-500/10"
-                  )}>
-                    <Icon className={cn(
-                      "w-6 h-6",
-                      channel.type === "SCHOOL" && "text-blue-500",
-                      channel.type === "DEPARTMENT_LEVEL" && "text-purple-500",
-                      channel.type === "GROUP" && "text-green-500"
-                    )} />
+          {/* Loading State */}
+          {isLoading && (
+            <div className="space-y-2 mb-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-full bg-card rounded-xl border border-border p-4 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-muted"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-3/4"></div>
+                    </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-                  {/* Channel Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className={cn(
-                        "font-medium truncate",
-                        unreadCount > 0 ? "text-foreground font-semibold" : "text-foreground"
-                      )}>{channel.name}</h3>
-                      {latest && (
-                        <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                          {formatDistanceToNow(latest.timestamp, { addSuffix: false })}
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <Megaphone className="w-6 h-6 text-red-500" />
+              </div>
+              <p className="text-red-500 font-medium mb-2">Failed to load announcements</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {navigator.onLine ? "Please try again" : "Check your internet connection"}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Channel List */}
+          {!isLoading && !error && (
+            <div className="space-y-2">
+              {channels.map((channel) => {
+                const Icon = channel.icon;
+                const latest = getLatestMessage(channel.type);
+                const unreadCount = getUnreadCount(channel.type);
+
+                return (
+                  <button
+                    key={channel.id}
+                    onClick={() => setSelectedChannel(channel)}
+                    className="w-full bg-card rounded-xl border border-border p-4 flex items-center gap-4 hover:bg-accent/50 transition-colors text-left"
+                  >
+                    {/* Channel Icon */}
+                    <div className={cn(
+                      "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0",
+                      channel.type === "SCHOOL" && "bg-blue-500/10",
+                      channel.type === "DEPARTMENT_LEVEL" && "bg-purple-500/10",
+                      channel.type === "GROUP" && "bg-green-500/10"
+                    )}>
+                      <Icon className={cn(
+                        "w-6 h-6",
+                        channel.type === "SCHOOL" && "text-blue-500",
+                        channel.type === "DEPARTMENT_LEVEL" && "text-purple-500",
+                        channel.type === "GROUP" && "text-green-500"
+                      )} />
+                    </div>
+
+                    {/* Channel Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={cn(
+                          "font-medium truncate",
+                          unreadCount > 0 ? "text-foreground font-semibold" : "text-foreground"
+                        )}>{channel.name}</h3>
+                        {latest && (
+                          <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                            {formatDistanceToNow(latest.timestamp, { addSuffix: false })}
+                          </span>
+                        )}
+                      </div>
+                      <p className={cn(
+                        "text-sm truncate",
+                        unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
+                      )}>
+                        {latest ? latest.title : channel.description}
+                      </p>
+                    </div>
+
+                    {/* Unread Badge & Arrow */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {unreadCount > 0 && (
+                        <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                          {unreadCount}
                         </span>
                       )}
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </div>
-                    <p className={cn(
-                      "text-sm truncate",
-                      unreadCount > 0 ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {latest ? latest.title : channel.description}
-                    </p>
-                  </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-                  {/* Unread Badge & Arrow */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {unreadCount > 0 && (
-                      <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                        {unreadCount}
-                      </span>
-                    )}
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {channels.length === 0 && (
+          {channels.length === 0 && !isLoading && !error && (
             <div className="text-center py-12">
               <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No channels available</p>
@@ -283,7 +328,7 @@ export default function Announcements() {
   return (
     <MobileLayout
       title={selectedChannel.name}
-      subtitle={`${channelMessages.length} messages`}
+      subtitle={isLoading ? "Loading..." : `${channelMessages.length} messages`}
       showBack={true}
       backAction={() => setSelectedChannel(null)}
     >
@@ -309,77 +354,110 @@ export default function Announcements() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex-1 flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading messages...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="flex-1 flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                <Megaphone className="w-6 h-6 text-red-500" />
+              </div>
+              <p className="text-red-500 font-medium mb-2">Failed to load messages</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {navigator.onLine ? "Please try again" : "Check your internet connection"}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Messages (Chat-style) */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {channelMessages.length > 0 ? (
-            channelMessages.slice().reverse().map((message, index, arr) => {
-              const showDateSeparator = index === 0 ||
-                format(message.timestamp, "yyyy-MM-dd") !==
-                format(arr[index - 1].timestamp, "yyyy-MM-dd");
+        {!isLoading && !error && (
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {channelMessages.length > 0 ? (
+              channelMessages.slice().reverse().map((message, index, arr) => {
+                const showDateSeparator = index === 0 ||
+                  format(message.timestamp, "yyyy-MM-dd") !==
+                  format(arr[index - 1].timestamp, "yyyy-MM-dd");
 
-              return (
-                <div key={message.id}>
-                  {/* Date Separator */}
-                  {showDateSeparator && (
-                    <div className="flex justify-center mb-4">
-                      <span className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
-                        {format(message.timestamp, "MMMM d, yyyy")}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Message Bubble */}
-                  <div className={cn(
-                    "bg-card rounded-2xl rounded-tl-sm border border-border p-4 shadow-sm max-w-[90%]",
-                    message.priority === "high" && "border-l-4 border-l-red-500"
-                  )}>
-                    {/* Sender */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium text-primary">
-                        {roleLabels[message.senderRole] || message.sender}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(message.timestamp, "h:mm a")}
-                      </span>
-                      {message.priority === "high" && (
-                        <span className="bg-red-500/10 text-red-500 text-[10px] font-medium px-1.5 py-0.5 rounded">
-                          URGENT
+                return (
+                  <div key={message.id}>
+                    {/* Date Separator */}
+                    {showDateSeparator && (
+                      <div className="flex justify-center mb-4">
+                        <span className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
+                          {format(message.timestamp, "MMMM d, yyyy")}
                         </span>
-                      )}
-                    </div>
-
-                    {/* Title */}
-                    <h4 className="font-semibold text-foreground mb-2">{message.title}</h4>
-
-                    {/* Content */}
-                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                      {message.content}
-                    </p>
-
-                    {/* AI Summary */}
-                    {message.summary && (
-                      <div className="mt-3 bg-accent/50 rounded-lg p-3 border border-border">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                          <Sparkles className="w-3 h-3" />
-                          <span className="font-medium">AI Summary</span>
-                        </div>
-                        <p className="text-sm text-foreground/70">{message.summary}</p>
                       </div>
                     )}
+
+                    {/* Message Bubble */}
+                    <div className={cn(
+                      "bg-card rounded-2xl rounded-tl-sm border border-border p-4 shadow-sm max-w-[90%]",
+                      message.priority === "high" && "border-l-4 border-l-red-500"
+                    )}>
+                      {/* Sender */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-medium text-primary">
+                          {roleLabels[message.senderRole] || message.sender}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(message.timestamp, "h:mm a")}
+                        </span>
+                        {message.priority === "high" && (
+                          <span className="bg-red-500/10 text-red-500 text-[10px] font-medium px-1.5 py-0.5 rounded">
+                            URGENT
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title */}
+                      <h4 className="font-semibold text-foreground mb-2">{message.title}</h4>
+
+                      {/* Content */}
+                      <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                        {message.content}
+                      </p>
+
+                      {/* AI Summary */}
+                      {message.summary && (
+                        <div className="mt-3 bg-accent/50 rounded-lg p-3 border border-border">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                            <Sparkles className="w-3 h-3" />
+                            <span className="font-medium">AI Summary</span>
+                          </div>
+                          <p className="text-sm text-foreground/70">{message.summary}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                );
+              })
+            ) : (
+              <div className="flex-1 flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No messages in this channel yet</p>
                 </div>
-              );
-            })
-          ) : (
-            <div className="flex-1 flex items-center justify-center py-12">
-              <div className="text-center">
-                <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No messages in this channel yet</p>
               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
 
         {/* Footer */}
         <div className="px-4 py-3 bg-muted/50 border-t border-border flex items-center justify-end">
