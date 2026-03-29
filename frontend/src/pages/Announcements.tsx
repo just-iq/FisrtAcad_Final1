@@ -54,8 +54,9 @@ export default function Announcements() {
   const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["announcements", "feed"],
     queryFn: async () => {
-      const result = (await offlineApi.announcementsFeed()).announcements;
-      return result;
+      const response = await offlineApi.announcementsFeed();
+      const loaded = Array.isArray(response?.announcements) ? response.announcements : [];
+      return loaded;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
@@ -188,6 +189,9 @@ export default function Announcements() {
   const channelMessages = selectedChannel
     ? allMessages.filter((m: any) => m.channelType === selectedChannel.type)
     : [];
+
+  // Show helpful fallback when no announcements exist instead of a blank screen
+  const hasMessages = allMessages.length > 0;
 
   // Get latest message for each channel (for preview)
   const getLatestMessage = (type: string) => {
@@ -338,6 +342,20 @@ export default function Announcements() {
               <p className="text-muted-foreground">No channels available</p>
             </div>
           )}
+
+          {!isLoading && !error && channels.length > 0 && !hasMessages && (
+            <div className="text-center py-12">
+              <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No announcements yet. Pull to refresh or wait for sync.</p>
+              <button
+                onClick={() => refetch()}
+                className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
+                Reload
+              </button>
+            </div>
+          )}
+
         </div>
       </MobileLayout>
     );
