@@ -87,18 +87,30 @@ export default function Announcements() {
   // Mark channel as read when entering
   useEffect(() => {
     if (selectedChannel) {
+      // Optimistically update cache to mark messages as read
+      queryClient.setQueryData(
+        ["announcements", "feed"],
+        (old: any) => {
+          if (!Array.isArray(old)) return old;
+          return old.map((msg: any) => 
+            msg.channel_type === selectedChannel.type 
+              ? { ...msg, is_read: true }
+              : msg
+          );
+        }
+      );
+
+      // Then sync to backend and DB
       offlineApi.markChannelRead(selectedChannel.type)
         .then(() => {
-          // Refresh unread counts
+          // Refresh unread counts from API
           refetchUnread();
-          // Invalidate announcements to refresh isRead flags
-          queryClient.invalidateQueries({ queryKey: ["announcements", "feed"] });
-          // Invalidate badge counts
-          queryClient.invalidateQueries({ queryKey: ["badge", "announcements"] });
+          // Re-fetch to ensure sync with backend
+          refetch();
         })
         .catch(console.error);
     }
-  }, [selectedChannel, refetchUnread, queryClient]);
+  }, [selectedChannel, refetchUnread, refetch, queryClient]);
 
   // Live updates — new announcements and AI-enriched updates (summary/priority patch)
   useEffect(() => {
