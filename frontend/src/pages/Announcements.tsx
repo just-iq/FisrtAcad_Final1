@@ -77,6 +77,8 @@ export default function Announcements() {
     queryKey: ["announcements", "unread-counts"],
     queryFn: async () => (await offlineApi.announcementUnreadCounts()).counts,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       if (!navigator.onLine) return false;
       return failureCount < 1;
@@ -100,15 +102,24 @@ export default function Announcements() {
         }
       );
 
+      // Optimistically update unread counts
+      queryClient.setQueryData(
+        ["announcements", "unread-counts"],
+        (old: any[]) => {
+          if (!Array.isArray(old)) return old;
+          return old.map(c => 
+            c.channel_type === selectedChannel.type 
+              ? { ...c, count: 0 }
+              : c
+          );
+        }
+      );
+
       // Then sync to backend and DB (don't refetch, keep optimistic update)
       offlineApi.markChannelRead(selectedChannel.type)
-        .then(() => {
-          // Only refresh unread counts, don't refetch full announcements
-          refetchUnread();
-        })
         .catch(console.error);
     }
-  }, [selectedChannel, refetchUnread, queryClient]);
+  }, [selectedChannel, queryClient]);
 
   // Live updates — new announcements and AI-enriched updates (summary/priority patch)
   useEffect(() => {
