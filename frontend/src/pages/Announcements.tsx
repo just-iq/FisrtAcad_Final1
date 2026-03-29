@@ -34,6 +34,7 @@ interface Message {
   senderRole: string;
   timestamp: Date;
   priority: "high" | "medium" | "low";
+  isRead?: boolean;
 }
 
 const roleLabels: Record<string, string> = {
@@ -182,6 +183,7 @@ export default function Announcements() {
     senderRole: (a.role_context || "student").toLowerCase(),
     timestamp: parseDate(a.created_at),
     priority: (a.priority || "low").toLowerCase() as "high" | "medium" | "low",
+    isRead: Boolean(a.is_read),
     channelType: a.channel_type
   }));
 
@@ -198,10 +200,15 @@ export default function Announcements() {
     return allMessages.find((m: any) => m.channelType === type);
   };
 
-  // Get unread count from API data
+  // Get unread count from NC API data with local fallback
   const getUnreadCount = (type: string) => {
     const found = (unreadData || []).find((c: any) => c.channel_type === type);
-    return found ? Number(found.count) : 0;
+    if (found && found.count !== undefined) {
+      return Number(found.count);
+    }
+
+    const localCount = allMessages.filter((m: any) => m.channelType === type && !m.isRead).length;
+    return localCount;
   };
 
   // Get total message count for a channel
