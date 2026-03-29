@@ -76,7 +76,7 @@ export default function Announcements() {
   const { data: unreadData, refetch: refetchUnread } = useQuery({
     queryKey: ["announcements", "unread-counts"],
     queryFn: async () => (await offlineApi.announcementUnreadCounts()).counts,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
