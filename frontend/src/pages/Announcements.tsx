@@ -89,7 +89,11 @@ export default function Announcements() {
     if (selectedChannel) {
       offlineApi.markChannelRead(selectedChannel.type)
         .then(() => {
+          // Refresh unread counts
           refetchUnread();
+          // Invalidate announcements to refresh isRead flags
+          queryClient.invalidateQueries({ queryKey: ["announcements", "feed"] });
+          // Invalidate badge counts
           queryClient.invalidateQueries({ queryKey: ["badge", "announcements"] });
         })
         .catch(console.error);
