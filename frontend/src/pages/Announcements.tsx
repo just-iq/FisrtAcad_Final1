@@ -121,7 +121,7 @@ export default function Announcements() {
       );
 
       // Update the total badge count
-      const newTotal = newUnreadData.reduce((sum, c) => sum + c.count, 0);
+      const newTotal = newUnreadData.reduce((sum, c) => sum + Number(c.count), 0);
       queryClient.setQueryData(["badge", "announcements"], newTotal);
 
       // Then sync to backend and DB (don't refetch, keep optimistic update)
