@@ -60,8 +60,6 @@ export default function Announcements() {
       return loaded;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     gcTime: 30 * 60 * 1000, // 30 minutes
     networkMode: 'offlineFirst', // Use cache first, even if stale
     retry: (failureCount, error) => {
