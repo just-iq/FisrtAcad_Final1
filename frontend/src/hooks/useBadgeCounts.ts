@@ -44,6 +44,9 @@ export function useBadgeCounts() {
       api
         .announcementUnreadCounts()
         .then((r) => r.counts.reduce((sum, c) => sum + Number(c.count), 0)),
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: assignmentsCount } = useQuery({

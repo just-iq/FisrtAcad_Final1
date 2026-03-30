@@ -12,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Sparkles } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { offlineApi } from "@/lib/offlineApi";
 import { toast } from "sonner";
 import { getAuthUser } from "@/lib/auth";
 import { useEffect } from "react";
@@ -72,10 +73,14 @@ export default function Dashboard() {
   });
   const pendingAssignments = (assignmentsData || []).filter((a: any) => !a.is_submitted).length;
 
-  // Get latest announcements
+  // Get latest announcements (shared read state with announcements page)
   const { data: announcementsData } = useQuery({
     queryKey: ["announcements", "feed"],
-    queryFn: async () => (await api.announcementsFeed()).announcements
+    queryFn: async () => (await offlineApi.announcementsFeed()).announcements,
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    networkMode: 'offlineFirst'
   });
   const priorityWeight: Record<string, number> = { high: 0, medium: 1, low: 2 };
   const latestAnnouncements = (announcementsData || []).map((a: any) => ({
