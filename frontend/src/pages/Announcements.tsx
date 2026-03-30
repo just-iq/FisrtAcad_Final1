@@ -85,6 +85,10 @@ export default function Announcements() {
       if (!navigator.onLine) return false;
       return failureCount < 1;
     },
+    select: (counts: any[]) => counts.map((c) => ({
+      ...c,
+      count: Number(c.count || 0)
+    })),
     initialData: []
   });
 
@@ -121,7 +125,7 @@ export default function Announcements() {
       );
 
       // Update the total badge count
-      const newTotal = newUnreadData.reduce((sum, c) => sum + Number(c.count), 0);
+      const newTotal = newUnreadData.reduce((sum, c) => sum + Number(c.count || 0), 0);
       queryClient.setQueryData(["badge", "announcements"], newTotal);
 
       // Then sync to backend and DB (don't refetch, keep optimistic update)
