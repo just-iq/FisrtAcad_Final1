@@ -39,7 +39,7 @@ async function updateAnnouncementAI(id, { priority, summary, ai_score }) {
 }
 
 async function getAnnouncementFeedForUser(user, { limit = 50, before } = {}) {
-  const params = [];
+  const params = [user.id];
   const scopeConditions = [];
   let beforeCondition = "";
 
