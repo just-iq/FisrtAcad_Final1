@@ -134,10 +134,11 @@ export async function saveAnnouncements(announcements: any[]): Promise<void> {
   const tx = database.transaction('announcements', 'readwrite');
 
   for (const announcement of announcements) {
+    const existing = await tx.store.get(announcement.id);
     await tx.store.put({
       ...announcement,
       synced: true,
-      is_read: announcement.is_read || false
+      is_read: existing?.is_read ?? Boolean(announcement.is_read)
     });
   }
 

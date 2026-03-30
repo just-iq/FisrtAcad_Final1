@@ -93,10 +93,8 @@ export default function Announcements() {
   // Mark channel as read when entering
   useEffect(() => {
     if (selectedChannel) {
-      // Don't update if unread data not loaded yet
-      if (!unreadData || unreadData.length === 0) {
-        return;
-      }
+      // Skip until feed has loaded and we have a channel selected
+      if (!data || data.length === 0) return;
 
       // Optimistically update cache to mark messages as read
       queryClient.setQueryData(
@@ -236,15 +234,15 @@ export default function Announcements() {
     return allMessages.find((m: any) => m.channelType?.toLowerCase() === type?.toLowerCase());
   };
 
-  // Get unread count from NC API data with local fallback
+  // Get unread count from local message state (primary) with backend fallback via unreadData
   const getUnreadCount = (type: string) => {
-    const found = (unreadData || []).find((c: any) => c.channel_type?.toLowerCase() === type?.toLowerCase());
-    if (found && found.count !== undefined) {
-      return Number(found.count);
+    const localCount = allMessages.filter((m: any) => m.channelType?.toLowerCase() === type?.toLowerCase() && !m.isRead).length;
+    if (localCount > 0 || allMessages.some((m: any) => m.channelType?.toLowerCase() === type?.toLowerCase())) {
+      return localCount;
     }
 
-    const localCount = allMessages.filter((m: any) => m.channelType?.toLowerCase() === type?.toLowerCase() && !m.isRead).length;
-    return localCount;
+    const found = (unreadData || []).find((c: any) => c.channel_type?.toLowerCase() === type?.toLowerCase());
+    return found ? Number(found.count || 0) : 0;
   };
 
   // Get total message count for a channel
