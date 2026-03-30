@@ -89,6 +89,11 @@ export default function Announcements() {
   // Mark channel as read when entering
   useEffect(() => {
     if (selectedChannel) {
+      // Don't update if unread data not loaded yet
+      if (!unreadData || unreadData.length === 0) {
+        return;
+      }
+
       // Optimistically update cache to mark messages as read
       queryClient.setQueryData(
         ["announcements", "feed"],
@@ -103,7 +108,7 @@ export default function Announcements() {
       );
 
       // Optimistically update unread counts
-      const newUnreadData = (unreadData || []).map(c => 
+      const newUnreadData = unreadData.map(c => 
         c.channel_type?.toLowerCase() === selectedChannel.type?.toLowerCase() 
           ? { ...c, count: 0 }
           : c
