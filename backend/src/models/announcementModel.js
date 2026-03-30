@@ -73,12 +73,8 @@ async function getAnnouncementFeedForUser(user, { limit = 50, before } = {}) {
 
   const res = await query(
     `
-    SELECT a.*,
-      COALESCE(r.read_at IS NOT NULL, false) AS is_read
+    SELECT a.*
     FROM announcements a
-    LEFT JOIN user_announcement_reads r
-      ON r.announcement_id = a.id
-      AND r.user_id = $1
     WHERE (${scopeConditions.join(" OR ")})${beforeCondition}
     ORDER BY a.created_at DESC
     LIMIT $${params.length};

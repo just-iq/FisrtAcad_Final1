@@ -65,12 +65,21 @@ export default function Dashboard() {
   }));
   const todayClasses = mappedTimetable.filter((entry) => entry.day === today);
 
-  // Get pending assignments count
+  // Get pending assignments count (missed/unsubmitted only)
   const { data: assignmentsData } = useQuery({
     queryKey: ["assignments"],
     queryFn: async () => (await api.assignmentsList()).assignments
   });
-  const pendingAssignments = (assignmentsData || []).filter((a: any) => !a.is_submitted).length;
+  const now = new Date();
+  const pendingAssignments = (assignmentsData || []).filter((a: any) => {
+    if (a.is_submitted) return false;
+    if (!a.due_at) return true;
+
+    const dueDate = new Date(a.due_at);
+    if (Number.isNaN(dueDate.getTime())) return true;
+
+    return dueDate < now;
+  }).length;
 
   // Get latest announcements
   const { data: announcementsData } = useQuery({
