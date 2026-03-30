@@ -177,7 +177,7 @@ export async function markChannelReadOffline(channelType: string): Promise<void>
 
   const tx = database.transaction('announcements', 'readwrite');
   for (const announcement of allAnnouncements) {
-    if (announcement.channel_type === channelType && !announcement.is_read) {
+    if (announcement.channel_type?.toLowerCase() === channelType?.toLowerCase() && !announcement.is_read) {
       await tx.store.put({
         ...announcement,
         is_read: true,

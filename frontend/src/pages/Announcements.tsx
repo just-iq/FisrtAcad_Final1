@@ -95,7 +95,7 @@ export default function Announcements() {
         (old: any) => {
           if (!Array.isArray(old)) return old;
           return old.map((msg: any) => 
-            msg.channel_type === selectedChannel.type 
+            msg.channel_type?.toLowerCase() === selectedChannel.type?.toLowerCase() 
               ? { ...msg, is_read: true }
               : msg
           );
@@ -104,7 +104,7 @@ export default function Announcements() {
 
       // Optimistically update unread counts
       const newUnreadData = (unreadData || []).map(c => 
-        c.channel_type === selectedChannel.type 
+        c.channel_type?.toLowerCase() === selectedChannel.type?.toLowerCase() 
           ? { ...c, count: 0 }
           : c
       );
@@ -216,7 +216,7 @@ export default function Announcements() {
 
   // Filter messages for selected channel
   const channelMessages = selectedChannel
-    ? allMessages.filter((m: any) => m.channelType === selectedChannel.type)
+    ? allMessages.filter((m: any) => m.channelType?.toLowerCase() === selectedChannel.type?.toLowerCase())
     : [];
 
   // Show helpful fallback when no announcements exist instead of a blank screen
@@ -224,17 +224,17 @@ export default function Announcements() {
 
   // Get latest message for each channel (for preview)
   const getLatestMessage = (type: string) => {
-    return allMessages.find((m: any) => m.channelType === type);
+    return allMessages.find((m: any) => m.channelType?.toLowerCase() === type?.toLowerCase());
   };
 
   // Get unread count from NC API data with local fallback
   const getUnreadCount = (type: string) => {
-    const found = (unreadData || []).find((c: any) => c.channel_type === type);
+    const found = (unreadData || []).find((c: any) => c.channel_type?.toLowerCase() === type?.toLowerCase());
     if (found && found.count !== undefined) {
       return Number(found.count);
     }
 
-    const localCount = allMessages.filter((m: any) => m.channelType === type && !m.isRead).length;
+    const localCount = allMessages.filter((m: any) => m.channelType?.toLowerCase() === type?.toLowerCase() && !m.isRead).length;
     return localCount;
   };
 
